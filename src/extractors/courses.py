@@ -2,8 +2,15 @@ from src.client import MoodleClient
 
 
 def get_all_courses(client: MoodleClient) -> list[dict]:
-    """Return all courses from the Moodle instance."""
-    return client.call("core_course_get_courses")
+    """Return all courses. Uses search fallback if token lacks system context."""
+    try:
+        return client.call("core_course_get_courses")
+    except RuntimeError as e:
+        if "errorcoursecontextnotvalid" not in str(e):
+            raise
+        # Token is scoped to a course context — use search instead
+        result = client.call("core_course_search_courses", criterianame="search", criteriavalue="")
+        return result.get("courses", [])
 
 
 def get_enrolled_users(client: MoodleClient, course_id: int) -> list[dict]:
