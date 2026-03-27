@@ -39,6 +39,7 @@ moodle-ws-extractor/
 - Raw API responses are saved to `data/raw/` before transformation so reruns don't need extra API calls.
 - Use dataclasses or Pydantic models in `src/models/` to represent domain objects.
 - Extractor functions return a `list[Model]`; serialization happens in scripts.
+- `scripts/extract.py` inserts the project root into `sys.path` at startup — always keep this as the first operation so `src` is importable regardless of the working directory.
 
 ## Environment Variables
 
@@ -49,12 +50,15 @@ MOODLE_TOKEN=your_ws_token_here
 
 Generate a token at: **Site administration → Plugins → Web services → Manage tokens**
 
+> **Token scope:** The token must be created in the **System** context (not tied to a specific course). If the token is course-scoped, `core_course_get_courses` will raise `errorcoursecontextnotvalid` and the extractor will automatically fall back to `core_course_search_courses`. To fix permanently: edit the token and set its context to **System**.
+
 ## Common Moodle WS Functions Used
 
 | Function | Purpose |
 |---|---|
 | `core_user_get_users` | List all users |
-| `core_course_get_courses` | List all courses |
+| `core_course_get_courses` | List all courses (requires system-context token) |
+| `core_course_search_courses` | List courses (fallback when token is course-scoped) |
 | `gradereport_user_get_grade_items` | Get grades per user |
 | `core_enrol_get_enrolled_users` | Get enrolled users per course |
 | `mod_assign_get_assignments` | Get assignments |
